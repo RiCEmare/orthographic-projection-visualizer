@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useStore } from "../store/useStore";
 import * as THREE from "three";
@@ -27,6 +27,9 @@ export function CameraAnimation() {
 		setShowFrontView,
 		setShowTopView,
 		setShowSideView,
+		flowPhase,
+		setFlowPhase,
+		setUnfoldProgress,
 	} = useStore();
 
 	const startPosition = useRef(new THREE.Vector3(-8, 6, 8));
@@ -38,23 +41,36 @@ export function CameraAnimation() {
 	const animationProgress = useRef(0);
 	const isReturning = useRef(false);
 	const stepDuration = 3; // seconds for each camera movement
-
-	useEffect(() => {
-		// Reset projections when animation step changes
-		if (projectionAnimationStep === "idle") {
-			setShowFrontView(false);
-			setShowTopView(false);
-			setShowSideView(false);
-		}
-	}, [
-		projectionAnimationStep,
-		setShowFrontView,
-		setShowTopView,
-		setShowSideView,
-	]);
+	const unfoldTimer = useRef(0);
+	const unfoldActive = useRef(false);
+	const unfoldDuration = 3; // seconds to fully unfold
 
 	useFrame((_, delta) => {
-		if (projectionAnimationStep === "idle") return;
+		const isUnfoldFlow = flowPhase === "unfolding";
+		if (flowPhase === "setup" && unfoldActive.current) {
+			unfoldActive.current = false;
+			unfoldTimer.current = 0;
+		}
+		// Removed automatic unfold animation - user controls unfold with slider/animate button
+		// if (unfoldActive.current) {
+		// 	unfoldTimer.current += delta;
+		// 	const progress = Math.min(unfoldTimer.current / unfoldDuration, 1);
+		// 	setUnfoldProgress(progress);
+		// 	if (progress >= 1) {
+		// 		unfoldActive.current = false;
+		// 		setFlowPhase("complete");
+		// 	}
+		// }
+
+		const isCameraLockedForUnfold =
+			flowPhase === "unfolding" &&
+			unfoldActive.current &&
+			projectionAnimationStep === "idle";
+		if (isCameraLockedForUnfold) return;
+
+		const activeStep = isUnfoldFlow ? "front" : projectionAnimationStep;
+
+		if (activeStep === "idle") return;
 
 		// Define target positions and up vectors based on animation step
 		let target: THREE.Vector3;
@@ -65,7 +81,7 @@ export function CameraAnimation() {
 				? new THREE.Vector3(0, 2, 2)
 				: new THREE.Vector3(0, -2, -2);
 
-		switch (projectionAnimationStep) {
+		switch (activeStep) {
 			case "front":
 				// Camera in front of object, looking at object with VP behind
 				target = new THREE.Vector3(
@@ -118,34 +134,35 @@ export function CameraAnimation() {
 				camera.lookAt(targetLookAt.current);
 
 				// Show the corresponding projection
-				if (projectionAnimationStep === "front") {
+				if (activeStep === "front") {
 					setShowFrontView(true);
-				} else if (projectionAnimationStep === "top") {
+				} else if (activeStep === "top") {
 					setShowTopView(true);
-				} else if (projectionAnimationStep === "side") {
+				} else if (activeStep === "side") {
 					setShowSideView(true);
 				}
 
-				// Start returning to start position
+				// If we are unfolding, stay put and drive plane animation
+				if (isUnfoldFlow) {
+					setProjectionAnimationStep("idle");
+					unfoldTimer.current = 0;
+					unfoldActive.current = true;
+					setUnfoldProgress(0);
+					return;
+				}
+
+				// Start returning to start position for regular view focus
 				isReturning.current = true;
 				animationProgress.current = 0;
 			} else {
-				// Returned to start position - move to next step
+				// Returned to start position - finish task
 				camera.position.copy(startPosition.current);
 				camera.up.copy(startUp.current);
 				camera.rotation.order = "XYZ";
 				camera.lookAt(startLookAt.current);
 				isReturning.current = false;
 				animationProgress.current = 0;
-
-				// Advance to next step
-				if (projectionAnimationStep === "front") {
-					setProjectionAnimationStep("top");
-				} else if (projectionAnimationStep === "top") {
-					setProjectionAnimationStep("side");
-				} else if (projectionAnimationStep === "side") {
-					setProjectionAnimationStep("idle");
-				}
+				setProjectionAnimationStep("idle");
 			}
 		} else {
 			// Smooth interpolation with easing

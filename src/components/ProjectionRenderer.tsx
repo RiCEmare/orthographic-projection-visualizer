@@ -12,7 +12,7 @@ function projectVertex(
 	const projected = vertex.clone();
 	switch (dropAxis) {
 		case "z":
-			projected.z = 0.01;
+			projected.z = 0;
 			break;
 		case "y":
 			projected.y = 0;
@@ -100,7 +100,7 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 
 	// Extract edges and project them
 	const { visibleEdges, hiddenEdges, position, rotation } = useMemo(() => {
-		const edges = new THREE.EdgesGeometry(geometry, 15);
+		const edges = new THREE.EdgesGeometry(geometry);
 		const posArray = edges.attributes.position.array;
 
 		// Projection parameters based on view
@@ -109,34 +109,40 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 		let dropAxis: "x" | "y" | "z";
 		let rotation: THREE.Euler;
 		let centerOffset: THREE.Vector3;
+		let dirSign: number;
 
 		switch (view) {
 			case "front": // Project onto VP (Z=0)
-				projectionDir = new THREE.Vector3(0, 0, 1); // Looking from +Z
-				planePosition = new THREE.Vector3(
-					objectPos.x,
-					objectPos.y,
-					0.01
-				);
+				dirSign = objectPos.z >= 0 ? 1 : -1;
+				projectionDir = new THREE.Vector3(0, 0, dirSign);
+				planePosition = new THREE.Vector3(objectPos.x, objectPos.y, 0);
 				dropAxis = "z";
 				rotation = new THREE.Euler(0, 0, 0);
 				centerOffset = new THREE.Vector3(objectPos.x, objectPos.y, 0);
 				break;
 			case "top": // Project onto HP (Y=0)
-				projectionDir = new THREE.Vector3(0, -1, 0); // Looking down from +Y onto HP
+				dirSign = objectPos.y >= 0 ? -1 : 1; // project toward object from plane
+				projectionDir = new THREE.Vector3(0, dirSign, 0);
 				planePosition = new THREE.Vector3(objectPos.x, 0, 0);
 				dropAxis = "y";
-				rotation = new THREE.Euler(-Math.PI / 2, 0, 0); // Align Z to vertical on unfolded HP
-				centerOffset = new THREE.Vector3(objectPos.x, 0, 2*objectPos.z);
+				rotation = new THREE.Euler(Math.PI / 2, 0, 0);
+				// Position projection on opposite halves based on angle
+				centerOffset = new THREE.Vector3(
+					objectPos.x,
+					0,
+					projectionType === "first-angle" ? 0 : 0
+				);
 				break;
 			case "side": // Project onto PP (X=0)
-				projectionDir = new THREE.Vector3(1, 0, 0); // Looking from +X
+				dirSign = objectPos.x >= 0 ? 1 : -1;
+				projectionDir = new THREE.Vector3(dirSign, 0, 0);
 				planePosition = new THREE.Vector3(0, 0, 0);
 				dropAxis = "x";
 				rotation = new THREE.Euler(0, Math.PI / 2, 0); // Align Z to horizontal on PP
 				centerOffset = new THREE.Vector3(0, objectPos.y, objectPos.z);
 				break;
 			default:
+				dirSign = 1;
 				projectionDir = new THREE.Vector3(0, 0, 1);
 				planePosition = new THREE.Vector3(0, 0, 0);
 				dropAxis = "z";
@@ -182,21 +188,20 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 				0.5
 			);
 			const rayOrigin = edgeMidpoint.clone();
-
-			// Move ray origin to be in front of the projection plane
+			const epsilon = 0.001;
 			switch (dropAxis) {
 				case "z":
-					rayOrigin.z = objectPos.z + 5;
+					rayOrigin.z = planePosition.z - dirSign * epsilon;
 					break;
 				case "y":
-					rayOrigin.y = objectPos.y + 5;
+					rayOrigin.y = planePosition.y - dirSign * epsilon;
 					break;
 				case "x":
-					rayOrigin.x = objectPos.x + 5;
+					rayOrigin.x = planePosition.x - dirSign * epsilon;
 					break;
 			}
 
-			raycaster.set(rayOrigin, projectionDir.clone().negate());
+			raycaster.set(rayOrigin, projectionDir.clone());
 			const intersects = raycaster.intersectObject(tempMesh);
 
 			// Determine if edge is visible or hidden
@@ -232,7 +237,7 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 			position: planePosition,
 			rotation,
 		};
-	}, [geometry, view, objectPos]);
+	}, [geometry, view, objectPos, projectionType]);
 
 	if (!visible) return null;
 
@@ -243,7 +248,8 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 			{/* Visible edges - solid black lines */}
 			<lineSegments
 				ref={visibleLinesRef}
-				geometry={visibleEdges}>
+				geometry={visibleEdges}
+				onUpdate={(line) => line.computeLineDistances()}>
 				<lineBasicMaterial
 					color="#000000"
 					linewidth={2}
@@ -253,7 +259,8 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 			{/* Hidden edges - dashed gray lines */}
 			<lineSegments
 				ref={hiddenLinesRef}
-				geometry={hiddenEdges}>
+				geometry={hiddenEdges}
+				onUpdate={(line) => line.computeLineDistances()}>
 				<lineDashedMaterial
 					color="#666666"
 					linewidth={1}

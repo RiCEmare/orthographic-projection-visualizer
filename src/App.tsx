@@ -7,6 +7,7 @@ import { HorizontalPlane } from "./components/HorizontalPlane";
 import { ProfilePlane } from "./components/ProfilePlane";
 import { CameraAnimation } from "./components/CameraAnimation";
 import { CameraTracker } from "./components/CameraTracker";
+import { PlaneIndicator } from "./components/PlaneIndicator";
 import { UIControls } from "./components/UIControls";
 import "./App.css";
 
@@ -55,6 +56,9 @@ function App() {
 
 				{/* Front View Projection - Fixed on VP */}
 				<FrontViewProjection />
+
+				{/* Plane Indicator - Arrow and label pointing to active plane */}
+				<PlaneIndicator />
 
 				{/* Camera Animation Controller */}
 				<CameraAnimation />

@@ -8,7 +8,9 @@ import { Edges } from "@react-three/drei";
  * - Third-angle: Object in third quadrant (negative x, y, z)
  */
 export function Object3D() {
-	const { objectShape, projectionType } = useStore();
+	const { objectShape, projectionType, showObject } = useStore();
+
+	if (!showObject) return null;
 
 	// Position based on projection type
 	// First-angle: [0, 2, 2] - projections centered on each plane face

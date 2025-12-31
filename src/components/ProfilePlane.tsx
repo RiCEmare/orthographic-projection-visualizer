@@ -27,52 +27,61 @@ import * as THREE from "three";
  * - Third Angle Final: rotation [0, 0, 0] (plane faces front, aligned with VP)
  */
 export function ProfilePlane() {
-	const { unfoldProgress, projectionType } = useStore();
-	const groupRef = useRef<THREE.Group>(null);
+	const { unfoldProgress, projectionType, highlightedPlane } = useStore();
+	const pivotGroupRef = useRef<THREE.Group>(null);
+	const planeGroupRef = useRef<THREE.Group>(null);
+	const meshRef = useRef<THREE.Mesh>(null);
+	const isHighlighted = highlightedPlane === "side";
 
-	// Profile Plane is fixed at x = 2 (right side)
+	// Profile Plane position
 	const xPosition = 2;
-
-	// Y and Z positions based on projection type
-	// First-angle: upper right quadrant (y=2, z=2)
-	// Third-angle: lower left quadrant (y=-2, z=-2)
 	const yPosition = projectionType === "first-angle" ? 2 : -2;
-	const zPosition = projectionType === "first-angle" ? 2 : -2;
+	const zPosition = 0;
 
 	// Calculate rotation based on unfold progress and projection type
-	// First Angle: π/2 → 0 (rotating from right-facing to front-facing)
-	// Third Angle: -π/2 → 0 (rotating from left-facing to front-facing)
 	const initialRotation =
-		projectionType === "first-angle" ? Math.PI / 2 : -Math.PI / 2;
+		projectionType === "first-angle" ? -Math.PI / 2 : Math.PI / 2;
 	const rotationY = initialRotation - unfoldProgress * initialRotation;
 
-	useFrame(() => {
-		if (groupRef.current) {
-			groupRef.current.rotation.y = rotationY;
+	useFrame(({ clock }) => {
+		if (pivotGroupRef.current) {
+			pivotGroupRef.current.rotation.y = rotationY;
+		}
+		if (meshRef.current && isHighlighted) {
+			const pulse = Math.sin(clock.getElapsedTime() * 3) * 0.2 + 0.3;
+			(meshRef.current.material as THREE.MeshStandardMaterial).opacity =
+				pulse;
 		}
 	});
 
 	return (
+		// Pivot group at x=0 (the rotation axis/hinge)
 		<group
-			ref={groupRef}
-			position={[xPosition, yPosition, zPosition]}>
-			{/* The PP plane mesh - upper right for first-angle, lower left for third-angle */}
-			<mesh position={[0, 0, 0]}>
-				<planeGeometry args={[4, 4]} />
-				<meshStandardMaterial
-					color="#90ee90"
-					transparent
-					opacity={0.25}
-					side={THREE.DoubleSide}
-				/>
-				<Edges
-					color="#00cc00"
-					linewidth={1.5}
-				/>
-			</mesh>
+			ref={pivotGroupRef}
+			position={[2, yPosition, zPosition]}>
+			{/* Plane group offset to x=2 so it appears at correct position */}
+			<group
+				ref={planeGroupRef}
+				position={[xPosition, 0, 0]}>
+				<mesh
+					ref={meshRef}
+					position={[0, 0, 0]}>
+					<planeGeometry args={[4, 4]} />
+					<meshStandardMaterial
+						color={isHighlighted ? "#ffff00" : "#90ee90"}
+						transparent
+						opacity={isHighlighted ? 0.5 : 0.25}
+						side={THREE.DoubleSide}
+					/>
+					<Edges
+						color={isHighlighted ? "#ffaa00" : "#00cc00"}
+						linewidth={isHighlighted ? 3 : 1.5}
+					/>
+				</mesh>
 
-			{/* Right Side View Projection - moves with the plane during unfolding */}
-			<RightSideViewProjection />
+				{/* Right Side View Projection - moves with the plane during unfolding */}
+				<RightSideViewProjection />
+			</group>
 		</group>
 	);
 }
