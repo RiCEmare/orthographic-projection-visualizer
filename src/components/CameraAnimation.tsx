@@ -1,0 +1,207 @@
+import { useRef, useEffect } from "react";
+import { useThree, useFrame } from "@react-three/fiber";
+import { useStore } from "../store/useStore";
+import * as THREE from "three";
+
+/**
+ * Camera Animation Controller
+ *
+ * This component handles the sequential camera movements that demonstrate
+ * how each orthographic projection is created:
+ *
+ * 1. Front View: Camera moves to front of object, shows projection on VP
+ * 2. Top View: Camera moves to top of object, shows projection on HP
+ * 3. Side View: Camera moves to side of object, shows projection on PP
+ *
+ * Each step:
+ * - Moves camera to viewing position
+ * - Shows the projection being created
+ * - Returns camera to starting position
+ */
+export function CameraAnimation() {
+	const { camera } = useThree();
+	const {
+		projectionAnimationStep,
+		setProjectionAnimationStep,
+		projectionType,
+		setShowFrontView,
+		setShowTopView,
+		setShowSideView,
+	} = useStore();
+
+	const startPosition = useRef(new THREE.Vector3(-8, 6, 8));
+	const startLookAt = useRef(new THREE.Vector3(0, 0, 0));
+	const startUp = useRef(new THREE.Vector3(0, 1, 0));
+	const targetPosition = useRef(new THREE.Vector3());
+	const targetLookAt = useRef(new THREE.Vector3());
+	const targetUp = useRef(new THREE.Vector3());
+	const animationProgress = useRef(0);
+	const isReturning = useRef(false);
+	const stepDuration = 3; // seconds for each camera movement
+
+	useEffect(() => {
+		// Reset projections when animation step changes
+		if (projectionAnimationStep === "idle") {
+			setShowFrontView(false);
+			setShowTopView(false);
+			setShowSideView(false);
+		}
+	}, [
+		projectionAnimationStep,
+		setShowFrontView,
+		setShowTopView,
+		setShowSideView,
+	]);
+
+	useFrame((_, delta) => {
+		if (projectionAnimationStep === "idle") return;
+
+		// Define target positions and up vectors based on animation step
+		let target: THREE.Vector3;
+		let lookAtTarget: THREE.Vector3;
+		let upVector: THREE.Vector3;
+		const objectPos =
+			projectionType === "first-angle"
+				? new THREE.Vector3(0, 2, 2)
+				: new THREE.Vector3(0, -2, -2);
+
+		switch (projectionAnimationStep) {
+			case "front":
+				// Camera in front of object, looking at object with VP behind
+				target = new THREE.Vector3(
+					objectPos.x,
+					objectPos.y,
+					objectPos.z + 8
+				);
+				lookAtTarget = objectPos.clone();
+				upVector = new THREE.Vector3(0, 1, 0); // Standard up vector
+				break;
+			case "top":
+				// Camera above object, looking down at object with HP beneath
+				// For top view, use -Z as up vector to avoid singularity when looking down Y-axis
+				// This ensures the camera orientation is stable with Z rotation = 0
+				target = new THREE.Vector3(
+					objectPos.x,
+					objectPos.y + 8,
+					objectPos.z
+				);
+				lookAtTarget = objectPos.clone();
+				upVector = new THREE.Vector3(0, 0, -1); // -Z up makes X axis point right
+				break;
+			case "side":
+				// Camera to the side of object, looking at object with PP behind
+				target = new THREE.Vector3(
+					objectPos.x - 8,
+					objectPos.y,
+					objectPos.z
+				);
+				lookAtTarget = objectPos.clone();
+				upVector = new THREE.Vector3(0, 1, 0); // Standard up vector
+				break;
+			default:
+				return;
+		}
+
+		targetPosition.current.copy(target);
+		targetLookAt.current.copy(lookAtTarget);
+		targetUp.current.copy(upVector);
+
+		// Animate camera movement
+		animationProgress.current += delta / stepDuration;
+
+		if (animationProgress.current >= 1) {
+			if (!isReturning.current) {
+				// Reached target position - set exact position and show projection
+				camera.position.copy(targetPosition.current);
+				camera.up.copy(targetUp.current);
+				camera.rotation.order = "XYZ";
+				camera.lookAt(targetLookAt.current);
+
+				// Show the corresponding projection
+				if (projectionAnimationStep === "front") {
+					setShowFrontView(true);
+				} else if (projectionAnimationStep === "top") {
+					setShowTopView(true);
+				} else if (projectionAnimationStep === "side") {
+					setShowSideView(true);
+				}
+
+				// Start returning to start position
+				isReturning.current = true;
+				animationProgress.current = 0;
+			} else {
+				// Returned to start position - move to next step
+				camera.position.copy(startPosition.current);
+				camera.up.copy(startUp.current);
+				camera.rotation.order = "XYZ";
+				camera.lookAt(startLookAt.current);
+				isReturning.current = false;
+				animationProgress.current = 0;
+
+				// Advance to next step
+				if (projectionAnimationStep === "front") {
+					setProjectionAnimationStep("top");
+				} else if (projectionAnimationStep === "top") {
+					setProjectionAnimationStep("side");
+				} else if (projectionAnimationStep === "side") {
+					setProjectionAnimationStep("idle");
+				}
+			}
+		} else {
+			// Smooth interpolation with easing
+			const t = easeInOutCubic(animationProgress.current);
+
+			// Temporary vectors for smooth lookAt and up interpolation
+			const currentLookAt = new THREE.Vector3();
+			const currentUp = new THREE.Vector3();
+
+			if (!isReturning.current) {
+				// Move from start to target
+				camera.position.lerpVectors(
+					startPosition.current,
+					targetPosition.current,
+					t
+				);
+
+				// Smoothly interpolate the up vector to avoid sudden orientation changes
+				currentUp.lerpVectors(startUp.current, targetUp.current, t);
+				camera.up.copy(currentUp);
+
+				// All views: smoothly interpolate lookAt
+				camera.rotation.order = "XYZ";
+				currentLookAt.lerpVectors(
+					startLookAt.current,
+					targetLookAt.current,
+					t
+				);
+				camera.lookAt(currentLookAt);
+			} else {
+				// Return from target to start
+				camera.position.lerpVectors(
+					targetPosition.current,
+					startPosition.current,
+					t
+				);
+
+				// Smoothly interpolate the up vector back to start
+				currentUp.lerpVectors(targetUp.current, startUp.current, t);
+				camera.up.copy(currentUp);
+
+				camera.rotation.order = "XYZ";
+				currentLookAt.lerpVectors(
+					targetLookAt.current,
+					startLookAt.current,
+					t
+				);
+				camera.lookAt(currentLookAt);
+			}
+		}
+	});
+
+	return null;
+}
+
+// Easing function for smooth animation
+function easeInOutCubic(t: number): number {
+	return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
