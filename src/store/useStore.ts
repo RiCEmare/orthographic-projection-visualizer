@@ -18,9 +18,23 @@ interface AppState {
 	setProjectionType: (type: "first-angle" | "third-angle") => void;
 
 	// Projection animation state
-	projectionAnimationStep: "idle" | "front" | "top" | "side" | "leftSide";
+	projectionAnimationStep:
+		| "idle"
+		| "front"
+		| "top"
+		| "side"
+		| "leftSide"
+		| "returnToStart"
+		| "frontViewFlat";
 	setProjectionAnimationStep: (
-		step: "idle" | "front" | "top" | "side" | "leftSide"
+		step:
+			| "idle"
+			| "front"
+			| "top"
+			| "side"
+			| "leftSide"
+			| "returnToStart"
+			| "frontViewFlat"
 	) => void;
 
 	// User flow control

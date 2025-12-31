@@ -45,9 +45,27 @@ export function CameraAnimation() {
 	const unfoldTimer = useRef(0);
 	const unfoldActive = useRef(false);
 	const unfoldDuration = 3; // seconds to fully unfold
+	const unfoldCompleteTriggered = useRef(false);
 
 	useFrame((_, delta) => {
 		const isUnfoldFlow = flowPhase === "unfolding";
+		const { unfoldProgress } = useStore.getState();
+
+		// Trigger camera movement when unfold reaches 100%
+		if (
+			isUnfoldFlow &&
+			unfoldProgress >= 1 &&
+			!unfoldCompleteTriggered.current &&
+			projectionAnimationStep === "idle"
+		) {
+			unfoldCompleteTriggered.current = true;
+			setProjectionAnimationStep("frontViewFlat");
+		}
+
+		// Reset trigger when leaving unfold phase
+		if (!isUnfoldFlow && unfoldCompleteTriggered.current) {
+			unfoldCompleteTriggered.current = false;
+		}
 		if (flowPhase === "setup" && unfoldActive.current) {
 			unfoldActive.current = false;
 			unfoldTimer.current = 0;
@@ -69,9 +87,95 @@ export function CameraAnimation() {
 			projectionAnimationStep === "idle";
 		if (isCameraLockedForUnfold) return;
 
-		const activeStep = isUnfoldFlow ? "front" : projectionAnimationStep;
+		const activeStep = projectionAnimationStep;
 
 		if (activeStep === "idle") return;
+
+		// Special handling for frontViewFlat - move to front view with y=0 after unfold completes
+		if (activeStep === "frontViewFlat") {
+			animationProgress.current += delta / stepDuration;
+			const t = easeInOutCubic(Math.min(animationProgress.current, 1));
+
+			const frontViewFlatPosition = new THREE.Vector3(0, 0, 14);
+			const frontViewFlatLookAt = new THREE.Vector3(0, 0, 0);
+			const frontViewFlatUp = new THREE.Vector3(0, 1, 0);
+
+			if (animationProgress.current >= 1) {
+				// Reached front view flat position
+				camera.position.copy(frontViewFlatPosition);
+				camera.up.copy(frontViewFlatUp);
+				camera.rotation.order = "XYZ";
+				camera.lookAt(frontViewFlatLookAt);
+				animationProgress.current = 0;
+				setProjectionAnimationStep("idle");
+				setFlowPhase("complete");
+			} else {
+				// Animate from current position to front view flat
+				const currentLookAt = new THREE.Vector3();
+				const currentUp = new THREE.Vector3();
+
+				camera.position.lerpVectors(
+					camera.position.clone(),
+					frontViewFlatPosition,
+					t
+				);
+				currentUp.lerpVectors(camera.up, frontViewFlatUp, t);
+				camera.up.copy(currentUp);
+				camera.rotation.order = "XYZ";
+
+				const currentDirection = new THREE.Vector3();
+				camera.getWorldDirection(currentDirection);
+				const currentTarget = camera.position
+					.clone()
+					.add(currentDirection);
+				currentLookAt.lerpVectors(
+					currentTarget,
+					frontViewFlatLookAt,
+					t
+				);
+				camera.lookAt(currentLookAt);
+			}
+			return;
+		}
+
+		// Special handling for returnToStart - just animate back to initial position
+		if (activeStep === "returnToStart") {
+			animationProgress.current += delta / stepDuration;
+			const t = easeInOutCubic(Math.min(animationProgress.current, 1));
+
+			if (animationProgress.current >= 1) {
+				// Reached start position
+				camera.position.copy(startPosition.current);
+				camera.up.copy(startUp.current);
+				camera.rotation.order = "XYZ";
+				camera.lookAt(startLookAt.current);
+				animationProgress.current = 0;
+				setProjectionAnimationStep("idle");
+			} else {
+				// Animate from current position to start
+				const currentLookAt = new THREE.Vector3();
+				const currentUp = new THREE.Vector3();
+
+				camera.position.lerp(startPosition.current, t * 0.1);
+				currentUp.lerpVectors(camera.up, startUp.current, t);
+				camera.up.copy(currentUp);
+				camera.rotation.order = "XYZ";
+
+				// Get current lookAt by using camera's direction
+				const currentDirection = new THREE.Vector3();
+				camera.getWorldDirection(currentDirection);
+				const currentTarget = camera.position
+					.clone()
+					.add(currentDirection);
+				currentLookAt.lerpVectors(
+					currentTarget,
+					startLookAt.current,
+					t
+				);
+				camera.lookAt(currentLookAt);
+			}
+			return;
+		}
 
 		// Define target positions and up vectors based on animation step
 		let target: THREE.Vector3;

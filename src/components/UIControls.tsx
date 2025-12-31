@@ -116,7 +116,15 @@ export function UIControls() {
 		if (nextView === "front") setFrontDrawn(true);
 		if (nextView === "top") setTopDrawn(true);
 		if (nextView === "side") setSideDrawn(true);
-		if (nextView === "leftSide") setLeftSideDrawn(true);
+		if (nextView === "leftSide") {
+			setLeftSideDrawn(true);
+			// After marking the last view as drawn, we'll trigger returnToStart
+			// This will happen after the leftSide animation completes and returns
+			setTimeout(() => {
+				// Check if we're still idle after the leftSide animation
+				setProjectionAnimationStep("returnToStart");
+			}, 6500); // Wait for leftSide animation to complete (3s to target + 3s return + buffer)
+		}
 	};
 
 	const handleShapeSelection = (
@@ -136,12 +144,11 @@ export function UIControls() {
 	};
 
 	const handleStartUnfold = () => {
-		// Move camera to observer (front) position, hide object, then unfold planes
+		// Hide object and start unfold phase without moving camera
 		setFlowPhase("unfolding");
 		setShowObject(false);
 		setUnfoldProgress(0);
-		setProjectionAnimationStep("front");
-		// Don't auto-start animation
+		// Camera stays in current position - no animation triggered
 	};
 
 	const handleReset = () => {
