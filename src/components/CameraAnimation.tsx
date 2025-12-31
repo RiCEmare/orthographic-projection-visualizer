@@ -229,16 +229,6 @@ export function CameraAnimation() {
 				lookAtTarget = objectPos.clone();
 				upVector = new THREE.Vector3(0, 1, 0); // Standard up vector
 				break;
-			case "leftSide":
-				// Camera to the left side of object, looking at object with left PP behind
-				target = new THREE.Vector3(
-					objectPos.x + 8,
-					objectPos.y,
-					objectPos.z
-				);
-				lookAtTarget = objectPos.clone();
-				upVector = new THREE.Vector3(0, 1, 0); // Standard up vector
-				break;
 			default:
 				return;
 		}
