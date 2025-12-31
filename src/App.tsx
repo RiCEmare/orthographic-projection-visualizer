@@ -8,6 +8,7 @@ import { ProfilePlane } from "./components/ProfilePlane";
 import { CameraAnimation } from "./components/CameraAnimation";
 import { CameraTracker } from "./components/CameraTracker";
 import { PlaneIndicator } from "./components/PlaneIndicator";
+import { ViewLabels } from "./components/ViewLabels";
 import { UIControls } from "./components/UIControls";
 import "./App.css";
 
@@ -59,6 +60,9 @@ function App() {
 
 				{/* Plane Indicator - Arrow and label pointing to active plane */}
 				<PlaneIndicator />
+
+				{/* View Labels - Shown at 100% unfold */}
+				<ViewLabels />
 
 				{/* Camera Animation Controller */}
 				<CameraAnimation />
