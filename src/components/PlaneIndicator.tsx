@@ -84,6 +84,21 @@ export function PlaneIndicator() {
 			}
 			planeLabel = "RHS View\non Profile\nPlane (PP)";
 			break;
+		case "leftSide":
+			// Arrow on left side of profile plane (pointing backward toward z=0)
+			if (projectionType === "first-angle") {
+				position = [-2, 2, 6];
+				arrowRotation = [Math.PI / 2, 0, 0];
+				textPosition = [-2, 3, 6];
+				textRotation = [0, 1.6, 0];
+			} else {
+				position = [-2, -2, -6];
+				arrowRotation = [-Math.PI / 2, 0, 0];
+				textPosition = [-2, -3, -6];
+				textRotation = [0, 1.6, 0];
+			}
+			planeLabel = "LHS View\non Left Profile\nPlane (PP)";
+			break;
 		default:
 			return null;
 	}

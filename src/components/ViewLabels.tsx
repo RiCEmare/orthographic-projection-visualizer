@@ -1,9 +1,11 @@
-import { Text } from "@react-three/drei";
+import { Text, Line } from "@react-three/drei";
 import { useStore } from "../store/useStore";
+import * as THREE from "three";
 
 /**
  * ViewLabels Component
  * Displays text labels for each view when unfolding animation is complete (100%)
+ * Also shows the XY reference line at the intersection of VP and HP
  */
 export function ViewLabels() {
 	const { unfoldProgress, projectionType } = useStore();
@@ -58,6 +60,61 @@ export function ViewLabels() {
 				outlineColor="#ffffff">
 				RIGHT SIDE VIEW
 			</Text>
+
+			{/* Left Side View Label */}
+			<Text
+				position={
+					projectionType === "first-angle"
+						? [-4, 4.5, 0]
+						: [-4, 0.5, 0]
+				}
+				fontSize={0.4}
+				color="#000000"
+				anchorX="center"
+				anchorY="middle"
+				outlineWidth={0.02}
+				outlineColor="#ffffff">
+				LEFT SIDE VIEW
+			</Text>
+
+			{/* XY Reference Line - Intersection of VP and HP */}
+			<group>
+				{/* The line along X-axis */}
+				<Line
+					points={[
+						[-8, 0, 0],
+						[8, 0, 0],
+					]}
+					color="#ff0000"
+					lineWidth={3}
+				/>
+
+				{/* XY Label - Left End */}
+				<Text
+					position={[-8.5, 0, 0]}
+					fontSize={0.35}
+					color="#ff0000"
+					anchorX="center"
+					anchorY="middle"
+					outlineWidth={0.02}
+					outlineColor="#ffffff"
+					fontWeight="bold">
+					XY
+				</Text>
+
+				{/* XY Label - Right End */}
+				<Text
+					position={[8.5, 0, 0]}
+					fontSize={0.35}
+					color="#ff0000"
+					anchorX="center"
+					anchorY="middle"
+					outlineWidth={0.02}
+					outlineColor="#ffffff"
+					fontWeight="bold">
+					XY
+				</Text>
+			</group>
 		</group>
 	);
 }

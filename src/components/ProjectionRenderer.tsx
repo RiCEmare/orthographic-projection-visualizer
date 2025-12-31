@@ -47,7 +47,7 @@ function projectVertex(
  */
 
 interface ProjectionProps {
-	view: "front" | "top" | "side";
+	view: "front" | "top" | "side" | "leftSide";
 	visible: boolean;
 }
 
@@ -133,12 +133,20 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 					projectionType === "first-angle" ? 0 : 0
 				);
 				break;
-			case "side": // Project onto PP (X=0)
+			case "side": // Project onto PP (X=0) - Right Side
 				dirSign = objectPos.x >= 0 ? 1 : -1;
 				projectionDir = new THREE.Vector3(dirSign, 0, 0);
 				planePosition = new THREE.Vector3(0, 0, 0);
 				dropAxis = "x";
 				rotation = new THREE.Euler(0, Math.PI / 2, 0); // Align Z to horizontal on PP
+				centerOffset = new THREE.Vector3(0, objectPos.y, objectPos.z);
+				break;
+			case "leftSide": // Project onto PP (X=0) - Left Side
+				dirSign = objectPos.x >= 0 ? -1 : 1;
+				projectionDir = new THREE.Vector3(dirSign, 0, 0);
+				planePosition = new THREE.Vector3(0, 0, 0);
+				dropAxis = "x";
+				rotation = new THREE.Euler(0, -Math.PI / 2, 0); // Align Z to horizontal on PP, mirrored
 				centerOffset = new THREE.Vector3(0, objectPos.y, objectPos.z);
 				break;
 			default:

@@ -4,7 +4,8 @@ import { Object3D } from "./components/Object3D";
 import { FrontViewProjection } from "./components/FrontViewProjection";
 import { VerticalPlane } from "./components/VerticalPlane";
 import { HorizontalPlane } from "./components/HorizontalPlane";
-import { ProfilePlane } from "./components/ProfilePlane";
+import { RightProfilePlane } from "./components/RightProfilePlane";
+import { LeftProfilePlane } from "./components/LeftProfilePlane";
 import { CameraAnimation } from "./components/CameraAnimation";
 import { CameraTracker } from "./components/CameraTracker";
 import { PlaneIndicator } from "./components/PlaneIndicator";
@@ -52,8 +53,11 @@ function App() {
 				{/* Horizontal Plane (HP) - Top View */}
 				<HorizontalPlane />
 
-				{/* Profile Plane (PP) - Right Side View */}
-				<ProfilePlane />
+				{/* Right Profile Plane (PP) - Right Side View */}
+				<RightProfilePlane />
+
+				{/* Left Profile Plane (PP) - Left Side View */}
+				<LeftProfilePlane />
 
 				{/* Front View Projection - Fixed on VP */}
 				<FrontViewProjection />

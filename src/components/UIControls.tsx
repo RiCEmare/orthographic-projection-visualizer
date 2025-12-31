@@ -24,15 +24,19 @@ export function UIControls() {
 		showFrontView,
 		showTopView,
 		showSideView,
+		showLeftSideView,
 		setShowFrontView,
 		setShowTopView,
 		setShowSideView,
+		setShowLeftSideView,
 		frontDrawn,
 		topDrawn,
 		sideDrawn,
+		leftSideDrawn,
 		setFrontDrawn,
 		setTopDrawn,
 		setSideDrawn,
+		setLeftSideDrawn,
 		setHighlightedPlane,
 		workflowStep,
 		setWorkflowStep,
@@ -53,10 +57,16 @@ export function UIControls() {
 	};
 
 	// Get suggested next view based on what's been drawn
-	const getNextSuggestedView = (): "front" | "top" | "side" | null => {
+	const getNextSuggestedView = ():
+		| "front"
+		| "top"
+		| "side"
+		| "leftSide"
+		| null => {
 		if (!frontDrawn) return "front";
 		if (!topDrawn) return "top";
 		if (!sideDrawn) return "side";
+		if (!leftSideDrawn) return "leftSide";
 		return null; // All views drawn
 	};
 
@@ -106,6 +116,7 @@ export function UIControls() {
 		if (nextView === "front") setFrontDrawn(true);
 		if (nextView === "top") setTopDrawn(true);
 		if (nextView === "side") setSideDrawn(true);
+		if (nextView === "leftSide") setLeftSideDrawn(true);
 	};
 
 	const handleShapeSelection = (
@@ -143,15 +154,17 @@ export function UIControls() {
 		setShowFrontView(false);
 		setShowTopView(false);
 		setShowSideView(false);
+		setShowLeftSideView(false);
 		setFrontDrawn(false);
 		setTopDrawn(false);
 		setSideDrawn(false);
+		setLeftSideDrawn(false);
 		setHighlightedPlane("front");
 		setWorkflowStep("shape-selection");
 	};
 
 	const nextView = getNextSuggestedView();
-	const allViewsDrawn = frontDrawn && topDrawn && sideDrawn;
+	const allViewsDrawn = frontDrawn && topDrawn && sideDrawn && leftSideDrawn;
 
 	// Update highlighted plane based on next view
 	useEffect(() => {
@@ -162,7 +175,11 @@ export function UIControls() {
 				projectionAnimationStep !== null
 			) {
 				setHighlightedPlane(
-					projectionAnimationStep as "front" | "top" | "side"
+					projectionAnimationStep as
+						| "front"
+						| "top"
+						| "side"
+						| "leftSide"
 				);
 			}
 			// When idle and there's a next view, highlight it
@@ -186,20 +203,28 @@ export function UIControls() {
 	]);
 
 	// Get descriptive plane name
-	const getPlaneName = (view: "front" | "top" | "side" | null) => {
+	const getPlaneName = (
+		view: "front" | "top" | "side" | "leftSide" | null
+	) => {
 		if (!view) return "";
 		if (view === "front") return "Vertical Plane (VP)";
 		if (view === "top") return "Horizontal Plane (HP)";
-		return "Profile Plane (PP)";
+		if (view === "side") return "Profile Plane (PP)";
+		if (view === "leftSide") return "Left Profile Plane (PP)";
+		return "";
 	};
 
 	// Get drawing status message
-	const getDrawingMessage = (view: "front" | "top" | "side") => {
+	const getDrawingMessage = (view: "front" | "top" | "side" | "leftSide") => {
 		if (view === "front")
 			return "Drawing front view projection on Vertical Plane (VP)";
 		if (view === "top")
 			return "Drawing top view projection on Horizontal Plane (HP)";
-		return "Drawing right hand side view projection on Profile Plane (PP)";
+		if (view === "side")
+			return "Drawing right hand side view projection on Profile Plane (PP)";
+		if (view === "leftSide")
+			return "Drawing left hand side view projection on Left Profile Plane (PP)";
+		return "";
 	};
 
 	return (
@@ -425,14 +450,19 @@ export function UIControls() {
 							}`}>
 							{projectionAnimationStep === "idle"
 								? `🎨 Draw ${
-										nextView.charAt(0).toUpperCase() +
-										nextView.slice(1)
+										nextView === "side"
+											? "Right Side"
+											: nextView === "leftSide"
+											? "Left Side"
+											: nextView.charAt(0).toUpperCase() +
+											  nextView.slice(1)
 								  } View`
 								: getDrawingMessage(
 										projectionAnimationStep as
 											| "front"
 											| "top"
 											| "side"
+											| "leftSide"
 								  )}
 						</button>
 					)}

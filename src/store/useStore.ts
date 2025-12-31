@@ -18,14 +18,16 @@ interface AppState {
 	setProjectionType: (type: "first-angle" | "third-angle") => void;
 
 	// Projection animation state
-	projectionAnimationStep: "idle" | "front" | "top" | "side";
+	projectionAnimationStep: "idle" | "front" | "top" | "side" | "leftSide";
 	setProjectionAnimationStep: (
-		step: "idle" | "front" | "top" | "side"
+		step: "idle" | "front" | "top" | "side" | "leftSide"
 	) => void;
 
 	// User flow control
-	selectedView: "front" | "top" | "side" | null;
-	setSelectedView: (view: "front" | "top" | "side" | null) => void;
+	selectedView: "front" | "top" | "side" | "leftSide" | null;
+	setSelectedView: (
+		view: "front" | "top" | "side" | "leftSide" | null
+	) => void;
 	flowPhase: "setup" | "unfolding" | "complete";
 	setFlowPhase: (phase: "setup" | "unfolding" | "complete") => void;
 	showObject: boolean;
@@ -45,21 +47,27 @@ interface AppState {
 	showFrontView: boolean;
 	showTopView: boolean;
 	showSideView: boolean;
+	showLeftSideView: boolean;
 	setShowFrontView: (show: boolean) => void;
 	setShowTopView: (show: boolean) => void;
 	setShowSideView: (show: boolean) => void;
+	setShowLeftSideView: (show: boolean) => void;
 
 	// Track completed drawings
 	frontDrawn: boolean;
 	topDrawn: boolean;
 	sideDrawn: boolean;
+	leftSideDrawn: boolean;
 	setFrontDrawn: (drawn: boolean) => void;
 	setTopDrawn: (drawn: boolean) => void;
 	setSideDrawn: (drawn: boolean) => void;
+	setLeftSideDrawn: (drawn: boolean) => void;
 
 	// Highlighted plane for visual feedback
-	highlightedPlane: "front" | "top" | "side" | null;
-	setHighlightedPlane: (plane: "front" | "top" | "side" | null) => void;
+	highlightedPlane: "front" | "top" | "side" | "leftSide" | null;
+	setHighlightedPlane: (
+		plane: "front" | "top" | "side" | "leftSide" | null
+	) => void;
 
 	// Camera position for debugging
 	cameraPosition: { x: number; y: number; z: number };
@@ -108,16 +116,20 @@ export const useStore = create<AppState>((set) => ({
 	showFrontView: false,
 	showTopView: false,
 	showSideView: false,
+	showLeftSideView: false,
 	setShowFrontView: (show) => set({ showFrontView: show }),
 	setShowTopView: (show) => set({ showTopView: show }),
 	setShowSideView: (show) => set({ showSideView: show }),
+	setShowLeftSideView: (show) => set({ showLeftSideView: show }),
 
 	frontDrawn: false,
 	topDrawn: false,
 	sideDrawn: false,
+	leftSideDrawn: false,
 	setFrontDrawn: (drawn) => set({ frontDrawn: drawn }),
 	setTopDrawn: (drawn) => set({ topDrawn: drawn }),
 	setSideDrawn: (drawn) => set({ sideDrawn: drawn }),
+	setLeftSideDrawn: (drawn) => set({ leftSideDrawn: drawn }),
 
 	highlightedPlane: "front",
 	setHighlightedPlane: (plane) => set({ highlightedPlane: plane }),

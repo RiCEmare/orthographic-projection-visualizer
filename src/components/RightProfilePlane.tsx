@@ -6,7 +6,7 @@ import { Edges } from "@react-three/drei";
 import * as THREE from "three";
 
 /**
- * Profile Plane (PP) - The side plane where the Right Side View is projected.
+ * Right Profile Plane (PP) - The side plane where the Right Side View is projected.
  *
  * CRITICAL IMPLEMENTATION:
  * This component represents the entire PP as a group that contains both:
@@ -26,7 +26,7 @@ import * as THREE from "three";
  * - Third Angle Initial: rotation [0, -π/2, 0] (plane faces left)
  * - Third Angle Final: rotation [0, 0, 0] (plane faces front, aligned with VP)
  */
-export function ProfilePlane() {
+export function RightProfilePlane() {
 	const { unfoldProgress, projectionType, highlightedPlane } = useStore();
 	const pivotGroupRef = useRef<THREE.Group>(null);
 	const planeGroupRef = useRef<THREE.Group>(null);
