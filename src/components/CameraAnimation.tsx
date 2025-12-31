@@ -42,6 +42,9 @@ export function CameraAnimation() {
 	const animationProgress = useRef(0);
 	const isReturning = useRef(false);
 	const stepDuration = 3; // seconds for each camera movement
+	const pauseDuration = 1; // seconds to pause at target position (increased by 1 second)
+	const pauseTimer = useRef(0);
+	const isPaused = useRef(false);
 	const unfoldTimer = useRef(0);
 	const unfoldActive = useRef(false);
 	const unfoldDuration = 3; // seconds to fully unfold
@@ -238,10 +241,12 @@ export function CameraAnimation() {
 		targetUp.current.copy(upVector);
 
 		// Animate camera movement
-		animationProgress.current += delta / stepDuration;
+		if (!isPaused.current) {
+			animationProgress.current += delta / stepDuration;
+		}
 
 		if (animationProgress.current >= 1) {
-			if (!isReturning.current) {
+			if (!isReturning.current && !isPaused.current) {
 				// Reached target position - set exact position and show projection
 				camera.position.copy(targetPosition.current);
 				camera.up.copy(targetUp.current);
@@ -268,9 +273,24 @@ export function CameraAnimation() {
 					return;
 				}
 
-				// Start returning to start position for regular view focus
-				isReturning.current = true;
-				animationProgress.current = 0;
+				// Start pause at target position
+				isPaused.current = true;
+				pauseTimer.current = 0;
+			} else if (isPaused.current) {
+				// During pause, maintain camera at target position
+				pauseTimer.current += delta;
+				camera.position.copy(targetPosition.current);
+				camera.up.copy(targetUp.current);
+				camera.rotation.order = "XYZ";
+				camera.lookAt(targetLookAt.current);
+
+				if (pauseTimer.current >= pauseDuration) {
+					// Pause complete - start returning to start position
+					isPaused.current = false;
+					pauseTimer.current = 0;
+					isReturning.current = true;
+					animationProgress.current = 0;
+				}
 			} else {
 				// Returned to start position - finish task
 				camera.position.copy(startPosition.current);
