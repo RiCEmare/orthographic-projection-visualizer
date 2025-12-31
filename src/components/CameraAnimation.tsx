@@ -49,10 +49,39 @@ export function CameraAnimation() {
 	const unfoldActive = useRef(false);
 	const unfoldDuration = 3; // seconds to fully unfold
 	const unfoldCompleteTriggered = useRef(false);
+	const hasResetCamera = useRef(false);
 
 	useFrame((_, delta) => {
 		const isUnfoldFlow = flowPhase === "unfolding";
 		const { unfoldProgress } = useStore.getState();
+
+		// Reset camera and animation state only ONCE when returning to setup phase
+		if (
+			flowPhase === "setup" &&
+			projectionAnimationStep === "idle" &&
+			!hasResetCamera.current
+		) {
+			// Reset camera to initial position
+			camera.position.set(-8, 6, 8);
+			camera.up.set(0, 1, 0);
+			camera.rotation.order = "XYZ";
+			camera.lookAt(0, 0, 0);
+
+			// Reset all animation refs
+			animationProgress.current = 0;
+			isReturning.current = false;
+			pauseTimer.current = 0;
+			isPaused.current = false;
+			unfoldTimer.current = 0;
+			unfoldActive.current = false;
+			unfoldCompleteTriggered.current = false;
+			hasResetCamera.current = true;
+		}
+
+		// Clear the reset flag when leaving setup phase
+		if (flowPhase !== "setup") {
+			hasResetCamera.current = false;
+		}
 
 		// Trigger camera movement when unfold reaches 100%
 		if (

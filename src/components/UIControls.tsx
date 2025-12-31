@@ -40,6 +40,7 @@ export function UIControls() {
 		setHighlightedPlane,
 		workflowStep,
 		setWorkflowStep,
+		resetAll,
 	} = useStore();
 
 	// Get shape emoji/icon
@@ -152,22 +153,8 @@ export function UIControls() {
 	};
 
 	const handleReset = () => {
-		setUnfoldProgress(0);
-		setIsAnimating(false);
-		setProjectionAnimationStep("idle");
-		setSelectedView(null);
-		setFlowPhase("setup");
-		setShowObject(true);
-		setShowFrontView(false);
-		setShowTopView(false);
-		setShowSideView(false);
-		setShowLeftSideView(false);
-		setFrontDrawn(false);
-		setTopDrawn(false);
-		setSideDrawn(false);
-		setLeftSideDrawn(false);
-		setHighlightedPlane("front");
-		setWorkflowStep("shape-selection");
+		// Use the comprehensive resetAll function from the store
+		resetAll();
 	};
 
 	const nextView = getNextSuggestedView();

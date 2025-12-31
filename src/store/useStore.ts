@@ -95,6 +95,9 @@ interface AppState {
 		z: number;
 		order: string;
 	}) => void;
+
+	// Reset all state to initial values
+	resetAll: () => void;
 }
 
 export const useStore = create<AppState>((set) => ({
@@ -153,4 +156,27 @@ export const useStore = create<AppState>((set) => ({
 
 	cameraRotation: { x: 0, y: 0, z: 0, order: "XYZ" },
 	setCameraRotation: (rot) => set({ cameraRotation: rot }),
+
+	// Reset all state to initial values
+	resetAll: () =>
+		set({
+			unfoldProgress: 0,
+			isAnimating: false,
+			projectionAnimationStep: "idle",
+			selectedView: null,
+			flowPhase: "setup",
+			showObject: true,
+			workflowStep: "shape-selection",
+			showFrontView: false,
+			showTopView: false,
+			showSideView: false,
+			showLeftSideView: false,
+			frontDrawn: false,
+			topDrawn: false,
+			sideDrawn: false,
+			leftSideDrawn: false,
+			highlightedPlane: null,
+			cameraPosition: { x: -8, y: 6, z: 8 },
+			cameraRotation: { x: 0, y: 0, z: 0, order: "XYZ" },
+		}),
 }));

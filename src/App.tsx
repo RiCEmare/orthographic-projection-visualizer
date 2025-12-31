@@ -76,6 +76,7 @@ function App() {
 
 				{/* Camera Controls */}
 				<OrbitControls
+					enabled={true}
 					enableDamping
 					dampingFactor={0.05}
 					minDistance={5}
