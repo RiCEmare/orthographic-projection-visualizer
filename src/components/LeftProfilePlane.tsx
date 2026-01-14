@@ -27,11 +27,22 @@ import * as THREE from "three";
  * - Third Angle Final: rotation [0, 0, 0] (plane faces front, aligned with VP)
  */
 export function LeftProfilePlane() {
-	const { unfoldProgress, projectionType, highlightedPlane } = useStore();
+	const {
+		unfoldProgress,
+		projectionType,
+		highlightedPlane,
+		projectionAnimationStep,
+		cameraAnimationProgress,
+	} = useStore();
 	const pivotGroupRef = useRef<THREE.Group>(null);
 	const planeGroupRef = useRef<THREE.Group>(null);
 	const meshRef = useRef<THREE.Mesh>(null);
 	const isHighlighted = highlightedPlane === "leftSide";
+
+	// Fade left plane when right side view is being drawn
+	const shouldFade = projectionAnimationStep === "side";
+	const fadeOpacity = shouldFade ? 1 - cameraAnimationProgress : 1;
+	const baseOpacity = (isHighlighted ? 0.5 : 0.25) * fadeOpacity;
 
 	// Left Profile Plane position
 	const xPosition = -2;
@@ -47,10 +58,17 @@ export function LeftProfilePlane() {
 		if (pivotGroupRef.current) {
 			pivotGroupRef.current.rotation.y = rotationY;
 		}
-		if (meshRef.current && isHighlighted) {
-			const pulse = Math.sin(clock.getElapsedTime() * 3) * 0.2 + 0.3;
-			(meshRef.current.material as THREE.MeshStandardMaterial).opacity =
-				pulse;
+		if (meshRef.current) {
+			if (isHighlighted && !shouldFade) {
+				const pulse = Math.sin(clock.getElapsedTime() * 3) * 0.2 + 0.3;
+				(
+					meshRef.current.material as THREE.MeshStandardMaterial
+				).opacity = pulse;
+			} else {
+				(
+					meshRef.current.material as THREE.MeshStandardMaterial
+				).opacity = baseOpacity;
+			}
 		}
 	});
 
@@ -70,7 +88,7 @@ export function LeftProfilePlane() {
 					<meshStandardMaterial
 						color={isHighlighted ? "#ffff00" : "#90ee90"}
 						transparent
-						opacity={isHighlighted ? 0.5 : 0.25}
+						opacity={baseOpacity}
 						side={THREE.DoubleSide}
 					/>
 					<Edges

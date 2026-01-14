@@ -31,6 +31,7 @@ export function CameraAnimation() {
 		flowPhase,
 		setFlowPhase,
 		setUnfoldProgress,
+		setCameraAnimationProgress,
 	} = useStore();
 
 	const startPosition = useRef(new THREE.Vector3(-8, 6, 8));
@@ -76,6 +77,7 @@ export function CameraAnimation() {
 			unfoldActive.current = false;
 			unfoldCompleteTriggered.current = false;
 			hasResetCamera.current = true;
+			setCameraAnimationProgress(0);
 		}
 
 		// Clear the reset flag when leaving setup phase
@@ -121,7 +123,10 @@ export function CameraAnimation() {
 
 		const activeStep = projectionAnimationStep;
 
-		if (activeStep === "idle") return;
+		if (activeStep === "idle") {
+			setCameraAnimationProgress(0);
+			return;
+		}
 
 		// Special handling for frontViewFlat - move to front view with y=0 after unfold completes
 		if (activeStep === "frontViewFlat") {
@@ -274,6 +279,20 @@ export function CameraAnimation() {
 			animationProgress.current += delta / stepDuration;
 		}
 
+		// Update camera animation progress for fade effects
+		if (!isPaused.current) {
+			if (isReturning.current) {
+				// When returning: progress goes from 1 back to 0
+				setCameraAnimationProgress(1 - animationProgress.current);
+			} else {
+				// When moving to target: progress goes from 0 to 1
+				setCameraAnimationProgress(animationProgress.current);
+			}
+		} else {
+			// Paused at target position
+			setCameraAnimationProgress(1);
+		}
+
 		if (animationProgress.current >= 1) {
 			if (!isReturning.current && !isPaused.current) {
 				// Reached target position - set exact position and show projection
@@ -328,6 +347,7 @@ export function CameraAnimation() {
 				camera.lookAt(startLookAt.current);
 				isReturning.current = false;
 				animationProgress.current = 0;
+				setCameraAnimationProgress(0);
 				setProjectionAnimationStep("idle");
 			}
 		} else {

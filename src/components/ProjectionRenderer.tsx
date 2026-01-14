@@ -49,9 +49,14 @@ function projectVertex(
 interface ProjectionProps {
 	view: "front" | "top" | "side" | "leftSide";
 	visible: boolean;
+	opacity?: number; // Optional opacity for fading effects
 }
 
-export function ProjectionRenderer({ view, visible }: ProjectionProps) {
+export function ProjectionRenderer({
+	view,
+	visible,
+	opacity = 1,
+}: ProjectionProps) {
 	const { objectShape, projectionType } = useStore();
 	const visibleLinesRef = useRef<THREE.LineSegments>(null);
 	const hiddenLinesRef = useRef<THREE.LineSegments>(null);
@@ -261,6 +266,8 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 				<lineBasicMaterial
 					color="#000000"
 					linewidth={2}
+					transparent
+					opacity={opacity}
 				/>
 			</lineSegments>
 
@@ -275,7 +282,7 @@ export function ProjectionRenderer({ view, visible }: ProjectionProps) {
 					dashSize={0.1}
 					gapSize={0.05}
 					transparent
-					opacity={0.5}
+					opacity={0.5 * opacity}
 				/>
 			</lineSegments>
 		</group>

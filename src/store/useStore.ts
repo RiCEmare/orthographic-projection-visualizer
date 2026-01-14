@@ -96,6 +96,10 @@ interface AppState {
 		order: string;
 	}) => void;
 
+	// Camera animation progress for fade effects (0 = at start, 1 = at target)
+	cameraAnimationProgress: number;
+	setCameraAnimationProgress: (progress: number) => void;
+
 	// Reset all state to initial values
 	resetAll: () => void;
 }
@@ -157,6 +161,10 @@ export const useStore = create<AppState>((set) => ({
 	cameraRotation: { x: 0, y: 0, z: 0, order: "XYZ" },
 	setCameraRotation: (rot) => set({ cameraRotation: rot }),
 
+	cameraAnimationProgress: 0,
+	setCameraAnimationProgress: (progress) =>
+		set({ cameraAnimationProgress: progress }),
+
 	// Reset all state to initial values
 	resetAll: () =>
 		set({
@@ -178,5 +186,6 @@ export const useStore = create<AppState>((set) => ({
 			highlightedPlane: null,
 			cameraPosition: { x: -8, y: 6, z: 8 },
 			cameraRotation: { x: 0, y: 0, z: 0, order: "XYZ" },
+			cameraAnimationProgress: 0,
 		}),
 }));

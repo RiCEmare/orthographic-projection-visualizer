@@ -7,12 +7,21 @@ import { ProjectionRenderer } from "./ProjectionRenderer";
  * CRITICAL: Must be placed inside the LeftProfilePlane group
  */
 export function LeftSideViewProjection() {
-	const { showLeftSideView } = useStore();
+	const {
+		showLeftSideView,
+		projectionAnimationStep,
+		cameraAnimationProgress,
+	} = useStore();
+
+	// Fade when right view is being drawn
+	const shouldFade = projectionAnimationStep === "side";
+	const fadeOpacity = shouldFade ? 1 - cameraAnimationProgress : 1;
 
 	return (
 		<ProjectionRenderer
 			view="leftSide"
 			visible={showLeftSideView}
+			opacity={fadeOpacity}
 		/>
 	);
 }
