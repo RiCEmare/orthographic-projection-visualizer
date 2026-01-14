@@ -27,7 +27,7 @@ export function STLModel({ url }: STLModelProps) {
 	// Normalize size to fit within a reasonable scale
 	geometry.computeBoundingSphere();
 	const scale = geometry.boundingSphere
-		? 1.5 / (geometry.boundingSphere.radius * 2)
+		? 2.5 / (geometry.boundingSphere.radius * 2)
 		: 1;
 
 	return (
