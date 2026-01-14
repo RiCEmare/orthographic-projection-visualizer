@@ -176,7 +176,14 @@ export function ProjectionRenderer({
 				projectionDir = new THREE.Vector3(dirSign, 0, 0);
 				planePosition = new THREE.Vector3(0, 0, 0);
 				dropAxis = "x";
-				rotation = new THREE.Euler(0, Math.PI / 2, 0); // Align Z to horizontal on PP
+				// In third-angle, rotation is flipped
+				rotation = new THREE.Euler(
+					0,
+					projectionType === "first-angle"
+						? Math.PI / 2
+						: -Math.PI / 2,
+					0
+				);
 				centerOffset = new THREE.Vector3(0, objectPos.y, objectPos.z);
 				break;
 			case "leftSide": // Project onto PP (X=0) - Left Side
@@ -184,7 +191,14 @@ export function ProjectionRenderer({
 				projectionDir = new THREE.Vector3(dirSign, 0, 0);
 				planePosition = new THREE.Vector3(0, 0, 0);
 				dropAxis = "x";
-				rotation = new THREE.Euler(0, -Math.PI / 2, 0); // Align Z to horizontal on PP, mirrored
+				// In third-angle, rotation is flipped
+				rotation = new THREE.Euler(
+					0,
+					projectionType === "first-angle"
+						? -Math.PI / 2
+						: Math.PI / 2,
+					0
+				);
 				centerOffset = new THREE.Vector3(0, objectPos.y, objectPos.z);
 				break;
 			default:
