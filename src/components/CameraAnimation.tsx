@@ -49,7 +49,6 @@ export function CameraAnimation() {
 	const isPaused = useRef(false);
 	const unfoldTimer = useRef(0);
 	const unfoldActive = useRef(false);
-	const unfoldDuration = 3; // seconds to fully unfold
 	const unfoldCompleteTriggered = useRef(false);
 	const hasResetCamera = useRef(false);
 

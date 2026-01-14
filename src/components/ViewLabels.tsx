@@ -1,6 +1,5 @@
 import { Text, Line } from "@react-three/drei";
 import { useStore } from "../store/useStore";
-import * as THREE from "three";
 
 /**
  * ViewLabels Component

@@ -22,17 +22,8 @@ export function UIControls() {
 		projectionAnimationStep,
 		setProjectionAnimationStep,
 		setSelectedView,
-		flowPhase,
 		setFlowPhase,
 		setShowObject,
-		showFrontView,
-		showTopView,
-		showSideView,
-		showLeftSideView,
-		setShowFrontView,
-		setShowTopView,
-		setShowSideView,
-		setShowLeftSideView,
 		frontDrawn,
 		topDrawn,
 		sideDrawn,
@@ -92,7 +83,6 @@ export function UIControls() {
 		const startProgress = unfoldProgress;
 		const duration = 2000; // 2 seconds
 		const startTime = Date.now();
-		let animationId: number | null = null;
 
 		const animate = () => {
 			const elapsed = Date.now() - startTime;
@@ -102,16 +92,15 @@ export function UIControls() {
 
 			// Continue animation only if not complete
 			if (progress < 1) {
-				animationId = requestAnimationFrame(animate);
+				requestAnimationFrame(animate);
 			} else {
 				// Animation complete - stop exactly at target
 				setUnfoldProgress(1);
 				setIsAnimating(false);
-				animationId = null;
 			}
 		};
 
-		animationId = requestAnimationFrame(animate);
+		requestAnimationFrame(animate);
 	};
 
 	const handleDrawNextProjection = () => {
@@ -211,19 +200,6 @@ export function UIControls() {
 		workflowStep,
 	]);
 
-	// Get descriptive plane name
-	const getPlaneName = (
-		view: "front" | "top" | "side" | "leftSide" | null
-	) => {
-		if (!view) return "";
-		if (view === "front") return "Vertical Plane (VP)";
-		if (view === "top") return "Horizontal Plane (HP)";
-		if (view === "side") return "Profile Plane (PP)";
-		if (view === "leftSide") return "Left Profile Plane (PP)";
-		return "";
-	};
-
-	// Get drawing status message
 	const getDrawingMessage = (view: "front" | "top" | "side" | "leftSide") => {
 		if (view === "front")
 			return "Drawing front view projection on Vertical Plane (VP)";
