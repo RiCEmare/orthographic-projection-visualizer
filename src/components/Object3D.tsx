@@ -1,5 +1,7 @@
 import { useStore } from "../store/useStore";
 import { Edges } from "@react-three/drei";
+import { STLModel } from "./STLModel";
+import { Suspense } from "react";
 
 /**
  * Main 3D object that students will project onto planes.
@@ -8,7 +10,8 @@ import { Edges } from "@react-three/drei";
  * - Third-angle: Object in third quadrant (negative x, y, z)
  */
 export function Object3D() {
-	const { objectShape, projectionType, showObject } = useStore();
+	const { objectShape, projectionType, showObject, customModelPath } =
+		useStore();
 
 	if (!showObject) return null;
 
@@ -98,6 +101,12 @@ export function Object3D() {
 						/>
 					</mesh>
 				</>
+			)}
+
+			{objectShape === "custom" && customModelPath && (
+				<Suspense fallback={null}>
+					<STLModel url={customModelPath} />
+				</Suspense>
 			)}
 		</group>
 	);

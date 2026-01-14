@@ -10,8 +10,14 @@ interface AppState {
 	setIsAnimating: (animating: boolean) => void;
 
 	// Object shape selection
-	objectShape: "cube" | "cylinder" | "cone" | "complex";
-	setObjectShape: (shape: "cube" | "cylinder" | "cone" | "complex") => void;
+	objectShape: "cube" | "cylinder" | "cone" | "complex" | "custom";
+	setObjectShape: (
+		shape: "cube" | "cylinder" | "cone" | "complex" | "custom"
+	) => void;
+
+	// Custom STL model
+	customModelPath: string | null;
+	setCustomModelPath: (path: string | null) => void;
 
 	// Projection type selection
 	projectionType: "first-angle" | "third-angle";
@@ -114,6 +120,9 @@ export const useStore = create<AppState>((set) => ({
 
 	objectShape: "cube",
 	setObjectShape: (shape) => set({ objectShape: shape }),
+
+	customModelPath: null,
+	setCustomModelPath: (path) => set({ customModelPath: path }),
 
 	projectionType: "first-angle",
 	setProjectionType: (type) => set({ projectionType: type }),

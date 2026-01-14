@@ -42,6 +42,7 @@ export function CameraAnimation() {
 	const targetUp = useRef(new THREE.Vector3());
 	const animationProgress = useRef(0);
 	const isReturning = useRef(false);
+	const lastProgressUpdate = useRef(0);
 	const stepDuration = 3; // seconds for each camera movement
 	const pauseDuration = 1; // seconds to pause at target position (increased by 1 second)
 	const pauseTimer = useRef(0);
@@ -77,6 +78,7 @@ export function CameraAnimation() {
 			unfoldActive.current = false;
 			unfoldCompleteTriggered.current = false;
 			hasResetCamera.current = true;
+			lastProgressUpdate.current = 0;
 			setCameraAnimationProgress(0);
 		}
 
@@ -124,7 +126,10 @@ export function CameraAnimation() {
 		const activeStep = projectionAnimationStep;
 
 		if (activeStep === "idle") {
-			setCameraAnimationProgress(0);
+			if (lastProgressUpdate.current !== 0) {
+				lastProgressUpdate.current = 0;
+				setCameraAnimationProgress(0);
+			}
 			return;
 		}
 
@@ -279,18 +284,22 @@ export function CameraAnimation() {
 			animationProgress.current += delta / stepDuration;
 		}
 
-		// Update camera animation progress for fade effects
+		// Update camera animation progress for fade effects (throttled to avoid infinite updates)
 		if (!isPaused.current) {
-			if (isReturning.current) {
-				// When returning: progress goes from 1 back to 0
-				setCameraAnimationProgress(1 - animationProgress.current);
-			} else {
-				// When moving to target: progress goes from 0 to 1
-				setCameraAnimationProgress(animationProgress.current);
+			const newProgress = isReturning.current
+				? 1 - animationProgress.current
+				: animationProgress.current;
+			// Only update if progress changed significantly (more than 0.01)
+			if (Math.abs(newProgress - lastProgressUpdate.current) > 0.01) {
+				lastProgressUpdate.current = newProgress;
+				setCameraAnimationProgress(newProgress);
 			}
 		} else {
 			// Paused at target position
-			setCameraAnimationProgress(1);
+			if (lastProgressUpdate.current !== 1) {
+				lastProgressUpdate.current = 1;
+				setCameraAnimationProgress(1);
+			}
 		}
 
 		if (animationProgress.current >= 1) {
@@ -347,6 +356,7 @@ export function CameraAnimation() {
 				camera.lookAt(startLookAt.current);
 				isReturning.current = false;
 				animationProgress.current = 0;
+				lastProgressUpdate.current = 0;
 				setCameraAnimationProgress(0);
 				setProjectionAnimationStep("idle");
 			}

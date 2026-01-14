@@ -1,6 +1,8 @@
 import { useRef, useMemo } from "react";
 import * as THREE from "three";
 import { useStore } from "../store/useStore";
+import { useLoader } from "@react-three/fiber";
+import { STLLoader } from "three/examples/jsm/loaders/STLLoader.js";
 
 /**
  * Helper function to project a vertex onto a plane by dropping one axis
@@ -57,7 +59,7 @@ export function ProjectionRenderer({
 	visible,
 	opacity = 1,
 }: ProjectionProps) {
-	const { objectShape, projectionType } = useStore();
+	const { objectShape, projectionType, customModelPath } = useStore();
 	const visibleLinesRef = useRef<THREE.LineSegments>(null);
 	const hiddenLinesRef = useRef<THREE.LineSegments>(null);
 
@@ -98,14 +100,45 @@ export function ProjectionRenderer({
 				);
 
 				return mergedGeometry;
+			case "custom":
+				// Return a placeholder - actual STL loading handled separately
+				return new THREE.BoxGeometry(1.5, 1.5, 1.5);
 			default:
 				return new THREE.BoxGeometry(1.5, 1.5, 1.5);
 		}
 	}, [objectShape]);
 
+	// Load STL geometry if custom model is selected
+	const stlGeometry =
+		objectShape === "custom" && customModelPath
+			? useLoader(STLLoader, customModelPath)
+			: null;
+
+	// Use STL geometry if available, otherwise use standard geometry
+	const activeGeometry = useMemo(() => {
+		if (stlGeometry) {
+			// Center and scale the STL geometry
+			const geom = stlGeometry.clone();
+			geom.computeBoundingBox();
+			const boundingBox = geom.boundingBox;
+			if (boundingBox) {
+				const center = new THREE.Vector3();
+				boundingBox.getCenter(center);
+				geom.translate(-center.x, -center.y, -center.z);
+			}
+			geom.computeBoundingSphere();
+			const scale = geom.boundingSphere
+				? 1.5 / (geom.boundingSphere.radius * 2)
+				: 1;
+			geom.scale(scale, scale, scale);
+			return geom;
+		}
+		return geometry;
+	}, [stlGeometry, geometry]);
+
 	// Extract edges and project them
 	const { visibleEdges, hiddenEdges, position, rotation } = useMemo(() => {
-		const edges = new THREE.EdgesGeometry(geometry);
+		const edges = new THREE.EdgesGeometry(activeGeometry);
 		const posArray = edges.attributes.position.array;
 
 		// Projection parameters based on view
@@ -165,7 +198,7 @@ export function ProjectionRenderer({
 
 		// Create raycaster for occlusion detection
 		const raycaster = new THREE.Raycaster();
-		const tempMesh = new THREE.Mesh(geometry);
+		const tempMesh = new THREE.Mesh(activeGeometry);
 		tempMesh.position.copy(objectPos);
 		tempMesh.updateMatrixWorld();
 
@@ -250,7 +283,7 @@ export function ProjectionRenderer({
 			position: planePosition,
 			rotation,
 		};
-	}, [geometry, view, objectPos, projectionType]);
+	}, [activeGeometry, view, objectPos, projectionType]);
 
 	if (!visible) return null;
 

@@ -1,5 +1,7 @@
 import { useStore } from "../store/useStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { stlModels } from "../config/models";
+import { ShapePreview } from "./ShapePreview";
 
 /**
  * UI Controls panel using Tailwind CSS.
@@ -13,6 +15,8 @@ export function UIControls() {
 		setIsAnimating,
 		objectShape,
 		setObjectShape,
+		customModelPath,
+		setCustomModelPath,
 		projectionType,
 		setProjectionType,
 		projectionAnimationStep,
@@ -43,8 +47,13 @@ export function UIControls() {
 		resetAll,
 	} = useStore();
 
+	// Track hover state for shape previews
+	const [hoveredShape, setHoveredShape] = useState<string | null>(null);
+
 	// Get shape emoji/icon
-	const getShapeIcon = (shape: "cube" | "cylinder" | "cone" | "complex") => {
+	const getShapeIcon = (
+		shape: "cube" | "cylinder" | "cone" | "complex" | "custom"
+	) => {
 		switch (shape) {
 			case "cube":
 				return "🟦";
@@ -54,6 +63,8 @@ export function UIControls() {
 				return "🍦";
 			case "complex":
 				return "⚙️";
+			case "custom":
+				return "📦";
 		}
 	};
 
@@ -129,9 +140,13 @@ export function UIControls() {
 	};
 
 	const handleShapeSelection = (
-		shape: "cube" | "cylinder" | "cone" | "complex"
+		shape: "cube" | "cylinder" | "cone" | "complex" | "custom"
 	) => {
 		setObjectShape(shape);
+		// Don't immediately move to next step - wait for confirmation
+	};
+
+	const handleConfirmShape = () => {
 		setWorkflowStep("projection-type");
 	};
 
@@ -338,24 +353,89 @@ export function UIControls() {
 						</p>
 					</div>
 
-					<div className="grid grid-cols-2 gap-3">
-						{(["cube", "cylinder", "cone", "complex"] as const).map(
-							(shape) => (
+					{/* Unified shape grid - basic shapes and STL models */}
+					<div className="max-h-96 overflow-y-auto pr-2 -mr-2">
+						<div className="grid grid-cols-2 gap-3">
+							{(["cube", "cylinder", "cone"] as const).map(
+								(shape) => (
+									<button
+										key={shape}
+										onClick={() =>
+											handleShapeSelection(shape)
+										}
+										onMouseEnter={() =>
+											setHoveredShape(shape)
+										}
+										onMouseLeave={() =>
+											setHoveredShape(null)
+										}
+										className={`group relative rounded-lg border-2 transition-all overflow-hidden ${
+											objectShape === shape
+												? "border-blue-600 bg-blue-50"
+												: "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+										}`}>
+										<ShapePreview
+											shape={shape}
+											isHovered={hoveredShape === shape}
+										/>
+										<div className="p-2 text-sm font-medium text-gray-700 group-hover:text-blue-700 text-center">
+											{shape.charAt(0).toUpperCase() +
+												shape.slice(1)}
+										</div>
+									</button>
+								)
+							)}
+
+							{/* STL Models with static thumbnail images */}
+							{stlModels.map((model, idx) => (
 								<button
-									key={shape}
-									onClick={() => handleShapeSelection(shape)}
-									className="group relative px-4 py-6 rounded-lg border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 transition-all text-center">
-									<div className="text-4xl mb-2">
-										{getShapeIcon(shape)}
+									key={`stl-${idx}`}
+									onClick={() => {
+										setObjectShape("custom");
+										setCustomModelPath(model.file || null);
+										handleShapeSelection("custom");
+									}}
+									className={`group relative rounded-lg border-2 transition-all overflow-hidden ${
+										objectShape === "custom" &&
+										customModelPath === model.file
+											? "border-blue-600 bg-blue-50"
+											: "border-gray-300 hover:border-blue-500 hover:bg-blue-50"
+									}`}>
+									<div className="w-full h-24 bg-black rounded-lg flex items-center justify-center overflow-hidden">
+										<img
+											src={model.thumbnail}
+											alt={model.name}
+											className="w-full h-full object-cover"
+											onError={(e) => {
+												// Fallback to placeholder if image doesn't exist
+												e.currentTarget.style.display =
+													"none";
+												const parent =
+													e.currentTarget
+														.parentElement;
+												if (parent) {
+													parent.innerHTML =
+														'<div class="text-4xl">📦</div>';
+												}
+											}}
+										/>
 									</div>
-									<div className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
-										{shape.charAt(0).toUpperCase() +
-											shape.slice(1)}
+									<div className="p-2 text-sm font-medium text-gray-700 group-hover:text-blue-700 text-center">
+										{model.name}
 									</div>
 								</button>
-							)
-						)}
+							))}
+						</div>
 					</div>
+
+					{/* Confirm button */}
+					{objectShape && (
+						<button
+							onClick={handleConfirmShape}
+							className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+							Confirm Selection →
+						</button>
+					)}
 				</div>
 			)}
 
@@ -368,8 +448,13 @@ export function UIControls() {
 						</p>
 						<p className="text-xs text-blue-700">
 							Selected: {getShapeIcon(objectShape)}{" "}
-							{objectShape.charAt(0).toUpperCase() +
-								objectShape.slice(1)}
+							{objectShape === "custom"
+								? customModelPath
+										?.split("/")
+										.pop()
+										?.replace(".stl", "") || "Custom Model"
+								: objectShape.charAt(0).toUpperCase() +
+								  objectShape.slice(1)}
 						</p>
 					</div>
 
@@ -460,7 +545,6 @@ export function UIControls() {
 								  )}
 						</button>
 					)}
-
 					{allViewsDrawn && projectionAnimationStep === "idle" && (
 						<button
 							onClick={handleStartUnfoldSequence}

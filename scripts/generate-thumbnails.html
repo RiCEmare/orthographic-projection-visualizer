@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0" />
+		<title>STL Thumbnail Generator</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				padding: 20px;
+				max-width: 800px;
+				margin: 0 auto;
+			}
+			#status {
+				margin: 20px 0;
+				padding: 10px;
+				background: #f0f0f0;
+				border-radius: 4px;
+			}
+			#canvas-container {
+				position: fixed;
+				left: -9999px;
+			}
+			.progress {
+				margin: 10px 0;
+				padding: 8px;
+				background: #e8f5e9;
+				border-left: 4px solid #4caf50;
+			}
+			.error {
+				background: #ffebee;
+				border-left: 4px solid #f44336;
+			}
+			button {
+				padding: 10px 20px;
+				font-size: 16px;
+				background: #2196f3;
+				color: white;
+				border: none;
+				border-radius: 4px;
+				cursor: pointer;
+			}
+			button:hover {
+				background: #1976d2;
+			}
+			button:disabled {
+				background: #ccc;
+				cursor: not-allowed;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>STL Thumbnail Generator</h1>
+		<p>This tool generates thumbnail images for all STL files.</p>
+		<button
+			id="generate-btn"
+			onclick="generateThumbnails()">
+			Generate Thumbnails
+		</button>
+		<div id="status"></div>
+		<div id="canvas-container"></div>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+					"three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+				}
+			}
+		</script>
+
+		<script type="module">
+			import * as THREE from "three";
+			import { STLLoader } from "three/addons/loaders/STLLoader.js";
+
+			const models = [
+				{ name: "Part 1A", file: "/shapes/PART_1A.stl" },
+				{ name: "Part 2A", file: "/shapes/PART_2A.stl" },
+				{ name: "Part 3A", file: "/shapes/PART_3A.stl" },
+				{ name: "Part 4A", file: "/shapes/PART_4A.stl" },
+				{ name: "Part 5A", file: "/shapes/PART_5A.stl" },
+				{ name: "Part 6A", file: "/shapes/PART_6A.stl" },
+				{ name: "Part 7A", file: "/shapes/PART_7A.stl" },
+				{ name: "Part 8A", file: "/shapes/PART_8A.stl" },
+				{ name: "Part 9A", file: "/shapes/PART_9A.stl" },
+				{ name: "Part 10A", file: "/shapes/PART_10A.stl" },
+				{ name: "Part 11A", file: "/shapes/PART_11A.stl" },
+				{ name: "Part 12A", file: "/shapes/PART_12A.stl" },
+				{ name: "Part 13A", file: "/shapes/PART_13A.stl" },
+				{ name: "Part 14A", file: "/shapes/PART_14A.stl" },
+				{ name: "Part 15A", file: "/shapes/PART_15A.stl" },
+				{ name: "Part 16A", file: "/shapes/PART_16A.stl" },
+				{ name: "Part 17A", file: "/shapes/PART_17A.stl" },
+				{ name: "Part 18A", file: "/shapes/PART_18A.stl" },
+				{ name: "Part 19A", file: "/shapes/PART_19A.stl" },
+				{ name: "Part 20A", file: "/shapes/PART_20A.stl" },
+			];
+
+			let scene, camera, renderer;
+			const statusDiv = document.getElementById("status");
+
+			function initRenderer() {
+				const container = document.getElementById("canvas-container");
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+				camera.position.set(2, 2, 2);
+				camera.lookAt(0, 0, 0);
+
+				renderer = new THREE.WebGLRenderer({
+					antialias: true,
+					preserveDrawingBuffer: true,
+					alpha: true,
+				});
+				renderer.setSize(200, 200);
+				renderer.setClearColor(0x000000, 1);
+				container.appendChild(renderer.domElement);
+
+				const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+				scene.add(ambientLight);
+
+				const directionalLight = new THREE.DirectionalLight(
+					0xffffff,
+					0.8
+				);
+				directionalLight.position.set(5, 5, 5);
+				scene.add(directionalLight);
+			}
+
+			function updateStatus(message, isError = false) {
+				const div = document.createElement("div");
+				div.className = isError ? "progress error" : "progress";
+				div.textContent = message;
+				statusDiv.appendChild(div);
+				statusDiv.scrollTop = statusDiv.scrollHeight;
+			}
+
+			async function loadAndRenderSTL(filePath) {
+				return new Promise((resolve, reject) => {
+					const loader = new STLLoader();
+
+					loader.load(
+						filePath,
+						(geometry) => {
+							// Center the geometry
+							geometry.computeBoundingBox();
+							const boundingBox = geometry.boundingBox;
+							if (boundingBox) {
+								const center = new THREE.Vector3();
+								boundingBox.getCenter(center);
+								geometry.translate(
+									-center.x,
+									-center.y,
+									-center.z
+								);
+							}
+
+							// Normalize size
+							geometry.computeBoundingSphere();
+							const scale = geometry.boundingSphere
+								? 1.5 / (geometry.boundingSphere.radius * 2)
+								: 1;
+
+							const material = new THREE.MeshStandardMaterial({
+								color: 0xffdd57,
+								transparent: true,
+								opacity: 0.8,
+							});
+
+							const mesh = new THREE.Mesh(geometry, material);
+							mesh.scale.set(scale, scale, scale);
+
+							// Add edges
+							const edges = new THREE.EdgesGeometry(geometry, 15);
+							const line = new THREE.LineSegments(
+								edges,
+								new THREE.LineBasicMaterial({ color: 0x000000 })
+							);
+							line.scale.set(scale, scale, scale);
+
+							scene.add(mesh);
+							scene.add(line);
+
+							// Render
+							renderer.render(scene, camera);
+
+							// Capture image
+							const dataUrl =
+								renderer.domElement.toDataURL("image/png");
+
+							// Cleanup
+							scene.remove(mesh);
+							scene.remove(line);
+							geometry.dispose();
+							material.dispose();
+
+							resolve(dataUrl);
+						},
+						undefined,
+						(error) => {
+							reject(error);
+						}
+					);
+				});
+			}
+
+			async function downloadImage(dataUrl, filename) {
+				const link = document.createElement("a");
+				link.download = filename;
+				link.href = dataUrl;
+				link.click();
+			}
+
+			window.generateThumbnails = async function () {
+				const btn = document.getElementById("generate-btn");
+				btn.disabled = true;
+				statusDiv.innerHTML = "";
+
+				initRenderer();
+				updateStatus("Starting thumbnail generation...");
+
+				for (let i = 0; i < models.length; i++) {
+					const model = models[i];
+					try {
+						updateStatus(
+							`[${i + 1}/${models.length}] Processing ${
+								model.name
+							}...`
+						);
+
+						const dataUrl = await loadAndRenderSTL(model.file);
+
+						// Extract filename without extension
+						const filename = model.file
+							.split("/")
+							.pop()
+							.replace(".stl", ".png");
+
+						// Download the image
+						await downloadImage(dataUrl, filename);
+						await new Promise((resolve) =>
+							setTimeout(resolve, 500)
+						); // Delay between downloads
+
+						updateStatus(`✓ Generated ${filename}`);
+					} catch (error) {
+						updateStatus(
+							`✗ Failed to generate ${model.name}: ${error.message}`,
+							true
+						);
+					}
+				}
+
+				updateStatus(
+					"✓ All thumbnails generated! Save them to public/thumbnails/"
+				);
+				btn.disabled = false;
+			};
+		</script>
+	</body>
+</html>
