@@ -128,7 +128,7 @@ export function ProjectionRenderer({
 			}
 			geom.computeBoundingSphere();
 			const scale = geom.boundingSphere
-				? 1.5 / (geom.boundingSphere.radius * 2)
+				? 2.5 / (geom.boundingSphere.radius * 2)
 				: 1;
 			geom.scale(scale, scale, scale);
 			return geom;
