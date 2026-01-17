@@ -80,9 +80,9 @@ export function PlaneIndicator() {
 				position = [2, -2, -6];
 				arrowRotation = [-Math.PI / 2, 0, 0];
 				textPosition = [2, -3, -6];
-				textRotation = [0, -1.6, 0];
+				textRotation = [0, 1.6, 0];
 			}
-			planeLabel = "RHS View\non Profile\nPlane (PP)";
+			planeLabel = "RHS View\non Right Profile\nPlane (PP)";
 			break;
 		case "leftSide":
 			// Arrow on left side of profile plane (pointing backward toward z=0)
@@ -94,8 +94,8 @@ export function PlaneIndicator() {
 			} else {
 				position = [-2, -2, -6];
 				arrowRotation = [-Math.PI / 2, 0, 0];
-				textPosition = [-2, -3, -6];
-				textRotation = [0, 1.6, 0];
+				textPosition = [-2, -3, -5.5];
+				textRotation = [0, -1.6, 0];
 			}
 			planeLabel = "LHS View\non Left Profile\nPlane (PP)";
 			break;

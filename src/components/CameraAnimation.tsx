@@ -252,8 +252,11 @@ export function CameraAnimation() {
 				break;
 			case "side":
 				// Camera to the side of object, looking at object with PP behind
+				// In third-angle: camera on left to view right side
 				target = new THREE.Vector3(
-					objectPos.x - 8,
+					projectionType === "first-angle"
+						? objectPos.x - 8
+						: objectPos.x + 8,
 					objectPos.y,
 					objectPos.z
 				);
@@ -262,8 +265,11 @@ export function CameraAnimation() {
 				break;
 			case "leftSide":
 				// Camera to the left side of object, looking at object with left PP behind
+				// In third-angle: camera on right to view left side
 				target = new THREE.Vector3(
-					objectPos.x + 8,
+					projectionType === "first-angle"
+						? objectPos.x + 8
+						: objectPos.x - 8,
 					objectPos.y,
 					objectPos.z
 				);
